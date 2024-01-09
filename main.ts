@@ -96,7 +96,9 @@ const stats = async () => {
 
 Deno.serve(async (req) => {
   if (/\/faction-stats\/?$/.test(req.url)) {
-    return new Response(JSON.stringify(await stats()));
+    return new Response(JSON.stringify(await stats()), {
+      headers: { "Access-Control-Allow-Origin": "*" },
+    });
   } else {
     return new Response("not found", { status: 404 });
   }

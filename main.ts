@@ -111,7 +111,7 @@ const season_faction_stats = (
         faction,
         gamesPlayed,
         leagueScore,
-        winRate: leagueScore / gamesPlayed,
+        winRate: 100 * leagueScore / gamesPlayed,
       };
     });
 

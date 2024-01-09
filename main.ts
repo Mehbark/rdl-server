@@ -111,7 +111,7 @@ const season_faction_stats = (
         faction,
         gamesPlayed,
         leagueScore,
-        winRate: 100 * (leagueScore / gamesPlayed),
+        winRate: leagueScore / gamesPlayed,
       };
     });
 
@@ -159,7 +159,7 @@ function leader(row: string[]): Leader {
     player: row[1],
     gamesPlayed,
     leagueScore,
-    winRate: leagueScore / gamesPlayed,
+    winRate: 100 * leagueScore / gamesPlayed,
   };
 }
 

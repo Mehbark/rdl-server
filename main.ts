@@ -94,4 +94,10 @@ const stats = async () => {
   return cached_stats;
 };
 
-Deno.serve(async () => new Response(JSON.stringify(await stats())));
+Deno.serve(async (req) => {
+  if (/\/faction-stats\/?$/.test(req.url)) {
+    return new Response(JSON.stringify(await stats()));
+  } else {
+    return new Response("not found", { status: 404 });
+  }
+});

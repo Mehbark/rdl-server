@@ -4,6 +4,7 @@ import { parse } from "https://deno.land/std@0.211.0/csv/mod.ts";
 let last_fetched = new Date("1970-01-01");
 // 5 minutes
 const MAX_AGE_MS = 5 * 60 * 1000;
+
 let cached_csv: string[][] = [];
 const should_refetch = () =>
   (new Date().getTime() - last_fetched.getTime()) > MAX_AGE_MS;
@@ -79,24 +80,35 @@ function mk_stats(csv: string[][]): Stats {
   return stats;
 }
 
-const stats = async () => {
-  if (should_refetch()) {
-    last_fetched = new Date();
-    cached_csv = parse(
-      await fetch(
-        "https://docs.google.com/spreadsheets/d/1yxy672ufBpg2R-aUqtpKI5erArzsqL0SjJcRgHKPhEo/export?format=csv&id=1yxy672ufBpg2R-aUqtpKI5erArzsqL0SjJcRgHKPhEo&gid=2066926104",
-        {},
-      ).then((r) => r.text()),
-    );
-    cached_stats = mk_stats(cached_csv);
-  }
+const update_stats = async () => {
+  last_fetched = new Date();
+  cached_csv = parse(
+    await fetch(
+      "https://docs.google.com/spreadsheets/d/1yxy672ufBpg2R-aUqtpKI5erArzsqL0SjJcRgHKPhEo/export?format=csv&id=1yxy672ufBpg2R-aUqtpKI5erArzsqL0SjJcRgHKPhEo&gid=2066926104",
+      {},
+    ).then((r) => r.text()),
+  );
+  cached_stats = mk_stats(cached_csv);
+};
 
+const stats = () => {
+  if (should_refetch()) {
+    update_stats();
+  }
   return cached_stats;
 };
 
-Deno.serve(async (req) => {
+await update_stats();
+
+// CAVEAT:
+// the above is refreshingly simple, but obscures some complexity in how *precisely* stats are distributed
+// on each request, if it has been more than MAX_AGE_MS, we will update the stats,
+// !but we return the old stats immediately!
+// it shouldn't be a big deal (low volume), but it is worth keeping in mind that this is a *tradeoff*
+
+Deno.serve((req) => {
   if (/\/faction-stats\/?$/.test(req.url)) {
-    return new Response(JSON.stringify(await stats()), {
+    return new Response(JSON.stringify(stats()), {
       headers: { "Access-Control-Allow-Origin": "*" },
     });
   } else {

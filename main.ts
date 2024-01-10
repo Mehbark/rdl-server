@@ -57,8 +57,18 @@ let last_fetched = new Date("1970-01-01");
 // 1 minute
 const MAX_AGE_MS = 1 * 60 * 1000;
 
-let cached_faction_csv: string[][] = [];
-let cached_leader_board_csvs: { name: SeasonName; csv: string[][] }[] = [];
+// screw it, let's do kv
+// these startup times are embarassing
+const kv = await Deno.openKv();
+
+let cached_faction_csv =
+  (await kv.get<string[][] | null>(["faction", "csv"])).value ?? [];
+
+let cached_leader_board_csvs: { name: SeasonName; csv: string[][] }[] =
+  (await kv.get<{ name: SeasonName; csv: string[][] }[] | null>([
+    "leader_board",
+    "csv",
+  ])).value ?? [];
 
 const should_refetch = () =>
   (new Date().getTime() - last_fetched.getTime()) > MAX_AGE_MS;
@@ -203,6 +213,9 @@ const update_csvs = async () => {
     })),
   );
   console.log(`[${new Date().toISOString()}] CSVs updated!`);
+
+  kv.set(["faction", "csv"], cached_faction_csv);
+  kv.set(["leader_board", "csv"], cached_leader_board_csvs);
 };
 
 const refetch = async () => {
@@ -210,7 +223,13 @@ const refetch = async () => {
   await update_csvs();
 };
 
-await refetch();
+if (
+  (cached_faction_csv.length == 0) || (cached_leader_board_csvs.length == 0)
+) {
+  await refetch();
+} else {
+  console.log(`[${new Date().toISOString()}] fetched CSVs from KV!`);
+}
 
 // TODO: a bit more fault-tolerance
 // TODO: PER PLAYER STATS! COMPLETELY DIFFERENT, DO NOT FORGET

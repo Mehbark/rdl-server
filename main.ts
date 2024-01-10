@@ -1,5 +1,3 @@
-import { debug } from "https://deno.land/std@0.195.0/log/mod.ts";
-import { assert } from "https://deno.land/std@0.211.0/assert/assert.ts";
 import * as csv from "https://deno.land/std@0.211.0/csv/mod.ts";
 // if needed (shouldn't really be beneficial)
 // import memoize from "https://deno.land/x/froebel@v0.23.2/memoize.ts"
